@@ -2,8 +2,8 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const Task = require('./task')
-const encrypt = require('mongoose-encryption')
+const Comment = require('./comment')
+// const encrypt = require('mongoose-encryption')
 require('dotenv').config()
 
 const userSchema = new mongoose.Schema({
@@ -54,12 +54,16 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 })
 
-userSchema.virtual('tasks', {
-    ref: 'Task',
+userSchema.virtual('comments', {
+    ref: 'Comment',
     localField: '_id',
     foreignField: 'owner'
 })
 
+/*
+Συνάρτηση η οποία χρησιμοποιείται για να ελέγξουμε αν υπάρχει ο χρήστης με τα παρακάτω στοιχεία.
+Αν υπάρχει επιστρέφουμε όλο το αντικείμενο User
+*/
 userSchema.statics.findByCredentials = async (email, password) => {
     const user = await User.findOne({ email: email })
 
@@ -76,6 +80,11 @@ userSchema.statics.findByCredentials = async (email, password) => {
     return user
 }
 
+/*
+Για λόγους ασφαλείας όταν πραγματοποιείται είσοδος χρήστη (login) δημιουργείται ένα token (μια συμβολοσειρά με τυχαίους χαρακτήρες) το οποίο απόθηκεύεται στο 
+αντίστοιχο πεδίο του model με σκοπό κάθε φορά που γίνεται κάποιο request μεταξύ server και client να χρησιμοποιείται αυτό το token ως ανανωριστικό για να μη χρειάζεται
+συνεχώς να στέλνει ο χρήστης το email και τον κωδικό του για να γίνεται η ταυτοποίηση.
+*/
 userSchema.methods.generateAuthToken = async function () {
     const user = this
 
@@ -97,6 +106,11 @@ userSchema.methods.toJSON = function () {
     return userObject
 }
 
+/*
+Κρυπτογράφηση του κωδικού μέσω της βιβλιοθήκης bcrypt ώστε να μην αποθηκεύεται ο κωδικός σαν plain text στη βάση.
+Το pre είναι δεσμευμένη λέξη της mongoose και η δουλειά που κάνει είναι πριν γίνει οποιοδήποτε save() (*παρατηρείται router του user σε πιθανή αλλαγή κωδικού)
+να ελέγχει αν έχει αλλάξει ο κωδικός ώστε να αποθηκεύση το κατάλληλο hash του στη βάση.
+*/
 userSchema.pre('save', async function (next) {
     const user = this
 
@@ -107,9 +121,12 @@ userSchema.pre('save', async function (next) {
     next()
 })
 
+/*
+Πριν εκτελεστεί η εντολή remove() (πχ στη διαγραφή του χρήστη) βρίσκει όλα τα comments τα οποία έχει δημοσιεύσει και τα διαγράφει (*ίσως και να μη τη χρειαστούμε αυτή)
+*/
 userSchema.pre('remove', async function (next) {
     const user = this
-    await Task.deleteMany({ owner: user._id })
+    await Comment.deleteMany({ owner: user._id })
     
     next()
 })
@@ -118,11 +135,11 @@ userSchema.pre('remove', async function (next) {
 // var sigKey = process.env.SIG;
 var secret = process.env.SECRET
 
-userSchema.plugin(encrypt, {
-    secret: secret,
-    encryptedFields: ['password', 'name', 'age'],
-    additionalAuthenticatedFields: ['email']
-})
+// userSchema.plugin(encrypt, {
+//     secret: secret,
+//     encryptedFields: ['password', 'name', 'age'],
+//     additionalAuthenticatedFields: ['email']
+// })
 
 // userSchema.plugin(encrypt.migrations, {
 //     secret: secret,

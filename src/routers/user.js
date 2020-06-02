@@ -4,6 +4,10 @@ const router = new express.Router()
 const auth = require('../middleware/auth')
 const bcrypt = require('bcryptjs')
 
+/*
+Δέχεται ως όρισμα ένα object τύπου user, δημιουργεί ένα αντίστοιχο αντικείμενο και αφού δημιουργήσει το token αποθηκεύει τον user στη βάση
+**Βλέπε αρχείο (../models/user)
+*/
 router.post('/users/signup', async (req, res) => {
     const user = new User(req.body)
 
@@ -32,6 +36,9 @@ router.post('/users/login', async (req,res) => {
     }
 })
 
+/*
+Διαγράφει το token το οποίο χρησιμοποιεί ο συγκεκριμένος user για τα request του, μη μπορόντας να κάνει πλέον άλλο request εκτός και αν ξανακάνει login
+*/
 router.post('/users/logout', auth, async (req, res) => {
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
@@ -47,6 +54,10 @@ router.post('/users/logout', auth, async (req, res) => {
     }
 })
 
+/*
+!!Δεν θα τη χρειαστούμε!!
+Μόνο για σκοπούς testing ΙΣΩΣ!
+*/
 router.post('/users/logoutAll', auth, async (req, res) => {
     try {
     req.user.tokens = []
@@ -61,10 +72,16 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     }
 })
 
+/*
+Δίνοντας τα κατάλληλα στοιχεία (χρήση του token) παίρνουμε πίσω τον συγκεκριμένο user (Κάτι σαν να παίρνουμε το profile)
+*/
 router.get('/users/me', auth, async (req,res) => {
     res.send(req.user)
 })
 
+/*
+Αυτό το call επεξεργάζεται τον user. Είναι αντίστοιχο με το patch στον router του comment.
+*/
 router.patch('/users/me', auth, async (req, res) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = ['name', 'age', 'email', 'password']
@@ -91,6 +108,10 @@ router.patch('/users/me', auth, async (req, res) => {
     }
 })
 
+/*
+Βρίσκει αν υπάρχει ο χρήστης και αν μπορεί να διαγραφεί (μέσω της auth) και διαγράφει τον χρήστη αφού πρώτα διαγράψει τα comments που έχουν γίνει από αυτόν
+ **Βλέπε: (../models/user) τη συνάρτηση pre('remove')
+*/
 router.delete('/users/me', auth, async (req,res) => {
 
     try {
