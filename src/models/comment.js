@@ -5,10 +5,15 @@ const commentSchema = mongoose.Schema({
         type: String,
         trim: true
     }, 
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'User'
+    // owner: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     required: true,
+    //     ref: 'User'
+    // },
+    user: {
+        type: String,
+        trim: true,
+        default: "Guest User " + Math.floor(Math.random() * Math.floor(Date.now()))
     }
 }, {
     timestamps: true

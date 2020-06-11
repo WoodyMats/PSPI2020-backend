@@ -54,11 +54,11 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 })
 
-userSchema.virtual('comments', {
-    ref: 'Comment',
-    localField: '_id',
-    foreignField: 'owner'
-})
+// userSchema.virtual('comments', {
+//     ref: 'Comment',
+//     localField: '_id',
+//     foreignField: 'owner'
+// })
 
 /*
 Συνάρτηση η οποία χρησιμοποιείται για να ελέγξουμε αν υπάρχει ο χρήστης με τα παρακάτω στοιχεία.

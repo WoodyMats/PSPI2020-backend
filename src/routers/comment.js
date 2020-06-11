@@ -9,10 +9,13 @@ const router = new express.Router()
 */
 router.post('/comment', auth, async (req,res) => {
     // const task = new Task(req.body)
+    console.log(req.body)
     const comment = new Comment({
-        ...req.body,
-        owner: req.user._id
+        text: req.body.text,
+        user: req.user.name
     })
+
+    console.log(comment)
 
     try {
         await comment.save()
@@ -23,6 +26,24 @@ router.post('/comment', auth, async (req,res) => {
         res.status(500).send(e)
     }
     
+})
+
+router.get('/getAllComments', async (req, res) => {
+    try {
+    const comments = await Comment.find({})
+
+    if (!comments) {
+        res.status(400).send({
+            message: "No comments found!"
+        })
+    } else {
+        res.status(200).send(comments)
+    }
+    } catch (err) {
+        res.status(500).send({
+            message: "Server error!"
+        })
+    }
 })
 
 router.get('/comments/my', auth, async (req,res) => {
@@ -37,12 +58,6 @@ router.get('/comments/my', auth, async (req,res) => {
     try {
         await req.user.populate({
             path: 'comments',
-            match,
-            options: {
-                limit: parseInt(req.query.limit),
-                skip: parseInt(req.query.skip),
-                sort
-            }
         }).execPopulate()
         res.status(200).send(req.user.tasks)
     } catch(e) {
